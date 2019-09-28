@@ -68,6 +68,8 @@ label_map = label_map_util.load_labelmap(PATH_TO_LABELS)
 categories = label_map_util.convert_label_map_to_categories(label_map, max_num_classes=NUM_CLASSES, use_display_name=True)
 category_index = label_map_util.create_category_index(categories)
 
+
+
 # Running the tensorflow session
 with detection_graph.as_default():
   with tf.Session(graph=detection_graph) as sess:
@@ -98,29 +100,68 @@ with detection_graph.as_default():
           category_index,
           use_normalized_coordinates=True,
           line_thickness=8)
-      """
-      lista=[]
+
+      #for i in category_index:
+          #print(category_index[i]["name"])
+      #print("\n\n")
       
-      for i in classes:
+      
+      
+      listaDistanciasinicial = []
+      for i,b in enumerate(boxes[0]):
+        #                 person                  laptop               bottle                 chair
+        if classes[0][i] == 1 or classes[0][i] == 73 or classes[0][i] == 44 or classes[0][i] == 62:
+          if scores[0][i] >= 0.5:
+            mid_x = (boxes[0][i][1]+boxes[0][i][3])/2
+            mid_y = (boxes[0][i][0]+boxes[0][i][2])/2
+            apx_distance = round(((1 - (boxes[0][i][3] - boxes[0][i][1]))**4),1)
+            cv2.putText(image_np, '{}'.format(apx_distance), (int(mid_x*800),int(mid_y*450)), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,255,255), 2)
+
+            if apx_distance <=0.5:
+              if mid_x > 0.3 and mid_x < 0.7:
+                cv2.putText(image_np, 'WARNING!!!', (50,50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0,0,255), 3)
+            listaDistanciasinicial.append(apx_distance)
+      
+        
+        
+      #toma la lista con todas las distancias de los objetos actualesy=
+      #y crea una nueva lista con las 2 distancias menores
+      listaDistancias=listaDistanciasinicial  
+      lista2Menores=[]
+      if len(listaDistancias)<=2:
+          lista2Menores=listaDistancias
+      else:
+          tmplista=[]        
           
-          lista.append(i)
-      print("frame classes: ",n)
-      print(lista)
-      n+=1
+          menor = listaDistancias[0]
+          flag=0
+          while flag<2: 
+              for valor in listaDistancias:
+                  if valor < menor:
+                      menor = valor
+                  else:
+                      tmplista.append(valor)
+              listaDistancias=tmplista
+              tmplista=[]
+              lista2Menores.append(menor)
+              menor = listaDistancias[0]
+              flag+=1
+      cont=0
+      for i in lista2Menores:
+          lista2Menores[cont]=int(i*30)
+          cont+=1
+          
       
-      listaj=[]
-      for j in scores:
-          listaj.append(j)
-      print("frame classes: ",n)
-      print(listaj)
-      n+=1
-      """
-      """listak=[]
-      for k in boxes:
-          listak.append(k)
-      print("frame classes: ",n)
-      print(listak)
-      n+=1"""
+      print(lista2Menores)
+      print(listaDistanciasinicial,"\n")
+      
+      #Crear Txt con las dos distancias menores
+      file = open("testfile.txt","w") 
+      stringlist=str(lista2Menores)
+      file.write(stringlist.replace(' ', '')) 
+      file.close() 
+      
+      
       #print('loop took {} seconds'.format(time.time()-last_time))
       last_time = time.time()
       cv2.imshow('window',cv2.cvtColor(image_np, cv2.COLOR_BGR2RGB))
@@ -128,7 +169,5 @@ with detection_graph.as_default():
           cv2.destroyAllWindows()
           #cap.release()
           break
-
-
 
 
